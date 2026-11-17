@@ -120,7 +120,11 @@ function App() {
     setResults([]);
     setIsLoading(true);
     try {
-      setResults(await Promise.all(files.map((file) => predictImage(file))));
+      const nextResults: PredictionResponse[] = [];
+      for (const file of files) {
+        nextResults.push(await predictImage(file));
+      }
+      setResults(nextResults);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -153,12 +157,16 @@ function App() {
 
     setIsEvaluating(true);
     try {
-      const predictions = await Promise.all(
-        labeledFiles.map(async (file) => ({
+      const predictions: Array<{
+        file: File;
+        result: PredictionResponse;
+      }> = [];
+      for (const file of labeledFiles) {
+        predictions.push({
           file,
           result: await predictImage(file),
-        })),
-      );
+        });
+      }
       const nextMatrix = createMatrix();
       predictions.forEach(({ file, result }) => {
         const path = (file as File & { webkitRelativePath: string }).webkitRelativePath;
